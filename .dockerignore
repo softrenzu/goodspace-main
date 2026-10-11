@@ -1,0 +1,5 @@
+.env
+backups/
+初期ログイン情報.txt
+*.zip
+.git/

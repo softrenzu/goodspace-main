@@ -1,0 +1,73 @@
+name: goodspace-wordpress
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${WP_DB_NAME:?set WP_DB_NAME}
+      MARIADB_USER: ${WP_DB_USER:?set WP_DB_USER}
+      MARIADB_PASSWORD: ${WP_DB_PASSWORD:?set WP_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${WP_DB_ROOT_PASSWORD:?set WP_DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${WP_DB_NAME:?set WP_DB_NAME}
+      WORDPRESS_DB_USER: ${WP_DB_USER:?set WP_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD:?set WP_DB_PASSWORD}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('DISALLOW_FILE_EDIT', true);
+        define('WP_MEMORY_LIMIT', '192M');
+        define('WP_MAX_MEMORY_LIMIT', '256M');
+    ports:
+      - "127.0.0.1:${WP_LOCAL_PORT:-8080}:80"
+    volumes:
+      - wp_data:/var/www/html
+      - ./frontend/themes/goodspace:/var/www/html/wp-content/themes/goodspace:ro
+      - ./frontend/plugins/goodspace-ai-editor:/var/www/html/wp-content/plugins/goodspace-ai-editor:ro
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wpcli:
+    image: wordpress:cli-php8.3
+    profiles: ["maintenance"]
+    depends_on:
+      db:
+        condition: service_healthy
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${WP_DB_NAME:?set WP_DB_NAME}
+      WORDPRESS_DB_USER: ${WP_DB_USER:?set WP_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD:?set WP_DB_PASSWORD}
+    volumes:
+      - wp_data:/var/www/html
+      - ./frontend/themes/goodspace:/var/www/html/wp-content/themes/goodspace:ro
+      - ./frontend/plugins/goodspace-ai-editor:/var/www/html/wp-content/plugins/goodspace-ai-editor:ro
+    working_dir: /var/www/html
+
+volumes:
+  db_data:
+  wp_data:

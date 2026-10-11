@@ -1,0 +1,11 @@
+.env
+**/.env
+**/.env.*
+!**/.env.example
+backups/
+preview/temporary/
+.DS_Store
+__pycache__/
+*.pyc
+初期ログイン情報.txt
+*.tar.xz

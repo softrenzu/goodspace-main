@@ -1,0 +1,4 @@
+<?php get_header(); ?>
+<main id="content" class="inner-main"><section class="page-hero"><div class="container"><span class="eyebrow">CONTACT</span><h1>お問い合わせ</h1><p>民泊運営や空間活用について、お気軽にご連絡ください。</p></div></section>
+<section class="section"><div class="container contact-layout"><div><h2>あなたの空間について、<br>お聞かせください。</h2><p>物件の所在地、用途、現在の状況、ご相談内容をお知らせいただくとご案内がスムーズです。</p><p class="fine-note">この試作版は個人情報をサーバー上に保存する問い合わせフォームを設置せず、メールと電話の窓口を案内しています。</p></div><div class="contact-methods"><a href="mailto:info@good-space.jp?subject=Good%20Space%20%E9%81%8B%E5%96%B6%E7%9B%B8%E8%AB%87" class="contact-method"><span>EMAIL</span><strong>info@good-space.jp</strong><i aria-hidden="true">↗</i></a><a href="tel:0345002481" class="contact-method"><span>PHONE</span><strong>03-4500-2481</strong><i aria-hidden="true">↗</i></a><p>受付時間 10:00〜18:00（土日祝・年末年始を除く）</p></div></div></section></main>
+<?php get_footer(); ?>

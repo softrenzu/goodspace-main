@@ -47,9 +47,11 @@ function gsai_daily_plan($day) {
     // Coprime increments spread the editorial areas and angles through the series.
     $area = $areas[$index % count($areas)];
     $angle = $angles[(int)floor($index / count($areas)) % count($angles)];
-    $title = $area . 'の' . $angle . '｜民泊・レンタルスペース運営の実務';
+    $contexts = array('民泊運営', 'レンタルスペース運営', '遊休スペース活用', '運営代行');
+    $context = $contexts[(int)floor($index / 7) % count($contexts)];
+    $title = $area . 'の' . $angle . '｜' . $context . 'の実務';
     $facts = 'Good Spaceが案内するサービス領域には、スペースの企画開発、物件選定、室内の企画、備品・設備の準備、撮影・掲載、予約管理、利用者対応、清掃・備品管理などがあります。'
-      . 'この記事では「' . $area . '」を「' . $angle . '」の観点から扱います。'
+      . 'この記事では「' . $context . '」における「' . $area . '」を「' . $angle . '」の観点から扱います。'
       . '具体的な数字、法令、許認可、施設実績、料金を推測して書かず、担当者が確認・記録・改善するための一般的な実務上の提案に限定してください。';
     return array('title'=>$title, 'facts'=>$facts, 'sources'=>array('https://good-space.jp/'),
                  'area'=>$area, 'angle'=>$angle);
@@ -70,6 +72,60 @@ function gsai_daily_auto_topic($day, $plan) {
     update_post_meta($id,'gsai_source_urls',$plan['sources']);
     update_post_meta($id,'gsai_auto_day',$day);
     return (int)$id;
+}
+
+/**
+ * Maintain a rolling 14-day queue of original, evergreen article themes.
+ * Never replace a user-created topic. Old unused auto topics are archived as drafts.
+ */
+function gsai_daily_refill($days=14) {
+    global $wpdb;
+    $lock='gsai_topic_refill';
+    if ((int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 0)', $lock)) !== 1) {
+        return array('status'=>'busy');
+    }
+    try {
+        $today=gsai_daily_jst_now()->format('Y-m-d');
+        $retired=0;
+        $old=get_posts(array(
+            'post_type'=>GSAI_POST_TYPE, 'post_status'=>'publish', 'fields'=>'ids',
+            'posts_per_page'=>50, 'meta_query'=>array(array(
+                'key'=>'gsai_auto_day', 'value'=>$today, 'compare'=>'<', 'type'=>'DATE',
+            )),
+        ));
+        foreach ($old as $topic_id) {
+            if (!(int)get_post_meta($topic_id,'gsai_generated_post',true)) {
+                $result=wp_update_post(array('ID'=>$topic_id,'post_status'=>'draft'),true);
+                if (!is_wp_error($result)) { $retired++; }
+            }
+        }
+        $created=0;
+        $existing=0;
+        $start=gsai_daily_jst_now()->setTime(0,0,0);
+        for ($i=0; $i<max(1,min(30,(int)$days)); $i++) {
+            $day=$start->modify('+'.$i.' day')->format('Y-m-d');
+            if ($day===$today && gsai_daily_post_exists($day)) { continue; }
+            $found=get_posts(array(
+                'post_type'=>GSAI_POST_TYPE, 'post_status'=>'publish',
+                'posts_per_page'=>1, 'meta_key'=>'gsai_auto_day', 'meta_value'=>$day,
+            ));
+            if ($found) { $existing++; continue; }
+            $id=gsai_daily_auto_topic($day,gsai_daily_plan($day));
+            if (is_wp_error($id)) {
+                $out=array('status'=>'failed','day'=>$day,'reason'=>$id->get_error_code(),
+                           'created'=>$created,'existing'=>$existing,'retired'=>$retired);
+                update_option('gsai_last_topic_refill',$out,false);
+                return $out;
+            }
+            $created++;
+        }
+        $out=array('status'=>'ok','created'=>$created,'existing'=>$existing,
+                   'retired'=>$retired,'days'=>$days,'refilled_at'=>$start->format('Y-m-d'));
+        update_option('gsai_last_topic_refill',$out,false);
+        return $out;
+    } finally {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
+    }
 }
 
 function gsai_daily_fallback_publish($day, $plan) {
@@ -107,18 +163,24 @@ function gsai_daily_publish_once() {
         return array('status'=>'busy','day'=>$day);
     }
     try {
+        // Refill themes even on days with an already-published post.
+        // A failed refill must not prevent today's publication: gsai_daily_auto_topic is a fallback.
+        gsai_daily_refill(14);
         if (gsai_daily_post_exists($day)) {
             $result=array('status'=>'already_published','day'=>$day);
             update_option('gsai_daily_last_result',$result,false);
             return $result;
         }
         $plan=gsai_daily_plan($day);
+        // Manually prepared topics take priority, but future auto topics are never
+        // consumed before their scheduled date.
         $topics=get_posts(array(
             'post_type'=>GSAI_POST_TYPE,'post_status'=>'publish',
             'posts_per_page'=>100,'orderby'=>'date','order'=>'ASC',
         ));
         $topic_id=0;
         foreach ($topics as $topic) {
+            if (get_post_meta($topic->ID,'gsai_auto_day',true)) { continue; }
             if (!(int)get_post_meta($topic->ID,'gsai_generated_post',true)) {
                 $topic_id=(int)$topic->ID;
                 break;
@@ -164,12 +226,20 @@ function gsai_daily_tick() {
 }
 
 if (defined('WP_CLI') && WP_CLI) {
+    WP_CLI::add_command('gsai refill', function () {
+        $r=gsai_daily_refill(14);
+        WP_CLI::log(wp_json_encode($r,JSON_UNESCAPED_UNICODE));
+        if (($r['status']??'')==='failed') { WP_CLI::error('Theme replenishment failed'); }
+    });
     WP_CLI::add_command('gsai daily', function () {
         $r=gsai_daily_publish_once();
         WP_CLI::log(wp_json_encode($r,JSON_UNESCAPED_UNICODE));
         if (($r['status']??'')==='failed') { WP_CLI::error('Daily publication failed'); }
     });
     WP_CLI::add_command('gsai status', function () {
-        WP_CLI::log(wp_json_encode(get_option('gsai_daily_last_result',array()),JSON_UNESCAPED_UNICODE));
+        WP_CLI::log(wp_json_encode(array(
+            'publication'=>get_option('gsai_daily_last_result',array()),
+            'themes'=>get_option('gsai_last_topic_refill',array())
+        ),JSON_UNESCAPED_UNICODE));
     });
 }

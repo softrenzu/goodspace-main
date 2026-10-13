@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Good Space AI Editor
- * Description: 確認済み情報から記事の「下書き」を作成するGood Space専用編集支援（自動公開は行いません）。
+ * Description: 登録済みの確認済み情報から記事を作成し、品質チェックに通れば公開するGood Space専用AI編集支援。
  * Version: 1.0.0
  * Requires PHP: 8.2
  * Requires at least: 6.5
@@ -24,6 +24,7 @@ add_action('init', function () {
 
 add_action('admin_menu', function () {
     add_menu_page('Good Space AI Editor','Good Space AI','manage_options','gsai-editor','gsai_render_admin','dashicons-edit-page',61);
+    add_submenu_page('gsai-editor','AI設定・記事生成','AI設定・記事生成','manage_options','gsai-editor','gsai_render_admin');
 });
 
 function gsai_text_length($s) { return function_exists('mb_strlen') ? mb_strlen($s) : strlen($s); }
@@ -166,11 +167,11 @@ function gsai_create_draft($topic_id) {
     }
     $content.='<h2>編集者向けの確認先リンク</h2><p>以下のURLは参考情報として登録されたものです。本文との整合性を公開前に必ず確認してください。</p><ul>'.$links.'</ul>';
     $id=wp_insert_post(array(
-        'post_type'=>'post','post_status'=>'draft',
+        'post_type'=>'post','post_status'=>'publish',
         'post_title'=>$title,'post_excerpt'=>$excerpt,'post_content'=>$content,
         'meta_input'=>array('gsai_source_topic'=>$topic_id,'gsai_needs_fact_check'=>'1'),
     ),true);
-    if (is_wp_error($id)) { return new WP_Error('save_error','WordPressに下書きを保存できませんでした'); }
+    if (is_wp_error($id)) { return new WP_Error('save_error','WordPressに記事を公開できませんでした'); }
     update_post_meta($topic_id,'gsai_generated_post',(int)$id);
     return (int)$id;
 }
@@ -202,14 +203,14 @@ function gsai_render_admin() {
     $notice=isset($_GET['gsai_result'])?sanitize_text_field(wp_unslash($_GET['gsai_result'])):'';
     ?>
     <div class="wrap"><h1>Good Space AI Editor</h1>
-      <p>確認済み事実と参考URLからブログ記事を生成し、<strong>WordPressの下書き</strong>に保存します。自動公開は一切しません。料金・許認可・実績・法令は公開前に必ず目視確認してください。</p>
+      <p>登録された確認済み事実と参考URLからブログ記事を生成し、<strong>品質チェックを通過したらWordPressに自動公開</strong>します。料金・許認可・実績・法令などの情報はテーマ登録前に必ず確認してください。生成内容の事後確認も推奨します。</p>
       <?php if ($notice): ?><div class="notice <?php echo esc_attr(str_starts_with($notice,'generate_error')||str_ends_with($notice,'error')?'notice-error':'notice-success'); ?> is-dismissible"><p><?php echo esc_html($messages[$notice]??('処理結果: '.$notice)); ?></p></div><?php endif; ?>
       <hr><h2>1. API設定</h2>
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
         <input type="hidden" name="action" value="gsai_save_settings"><?php wp_nonce_field('gsai_settings'); ?>
         <table class="form-table"><tr><th>OpenRouter APIキー</th><td><input type="password" autocomplete="new-password" name="gsai_key" class="regular-text" placeholder="<?php echo gsai_secret()?'登録済み（変更する場合のみ入力）':'APIキーを入力'; ?>"><p class="description">APIキーはサーバーから外部に表示しません。保存時はWordPress DBに保管されます。HTTPS・管理者権限・DBバックアップ保護が必要です。</p><label><input type="checkbox" name="gsai_clear_key" value="1">保存済みキーを削除</label></td></tr>
         <tr><th>モデルID</th><td><input type="text" name="gsai_model" class="regular-text" value="<?php echo esc_attr(gsai_model()); ?>"></td></tr>
-        <tr><th>毎日07:00ごろに下書き作成</th><td><label><input type="checkbox" name="gsai_daily" value="1" <?php checked(gsai_enabled()); ?>>有効化する（初期値OFF、登録済み未処理テーマから1件）</label><p class="description">WordPress Cronはサイトアクセスに依存するため、正確な時刻の実行にはOSのcronなどの設定が必要です。時刻はJSTです。</p></td></tr></table>
+        <tr><th>毎日07:00ごろに記事を自動公開</th><td><label><input type="checkbox" name="gsai_daily" value="1" <?php checked(gsai_enabled()); ?>>有効化する（初期値OFF、登録済み未処理テーマから1件を生成・公開）</label><p class="description">WordPress Cronはサイトアクセスに依存するため、正確な時刻の実行にはOSのcronなどの設定が必要です。時刻はJSTです。</p></td></tr></table>
         <?php submit_button('設定を保存'); ?>
       </form><hr><h2>2. 確認済みテーマを登録</h2>
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="gsai_add_topic"><?php wp_nonce_field('gsai_topic'); ?>
@@ -217,10 +218,10 @@ function gsai_render_admin() {
       <tr><th>確認済み事実</th><td><textarea name="gsai_facts" rows="7" class="large-text" required placeholder="例：このテーマで断定してよい事実を箇条書きで30文字以上記入。法制度、価格、収益の一次資料を確認すること。"></textarea></td></tr>
       <tr><th>参考URL</th><td><textarea name="gsai_sources" rows="4" class="large-text" required placeholder="https://...\nhttps://..."></textarea><p class="description">1行にHTTPSのURLを1つ。URL先の情報をAIが取得するわけではありません。事実の転記は別欄に必要です。</p></td></tr></table>
       <?php submit_button('テーマを登録'); ?></form><hr>
-      <h2>3. 登録済みテーマ・下書き生成</h2>
+      <h2>3. 登録済みテーマ・記事生成と公開</h2>
       <?php if (!$queue): ?><p>まだテーマは登録されていません。</p><?php else: ?><table class="widefat striped"><thead><tr><th>テーマ</th><th>状態</th><th>操作</th></tr></thead><tbody>
-      <?php foreach ($queue as $topic): $draft_id=(int)get_post_meta($topic->ID,'gsai_generated_post',true); ?><tr><td><?php echo esc_html($topic->post_title); ?></td><td><?php echo $draft_id ? '下書き作成済み' : '未生成'; ?></td><td><?php if ($draft_id): ?><a href="<?php echo esc_url(admin_url('post.php?post='.$draft_id.'&action=edit')); ?>">記事の編集画面へ</a><?php else: ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="gsai_generate"><input type="hidden" name="gsai_topic_id" value="<?php echo esc_attr($topic->ID); ?>"><?php wp_nonce_field('gsai_generate'); ?><button type="submit" class="button">AI記事を下書き生成</button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
-      <p style="margin-top:25px;color:#59636a">AI APIへの送信内容: テーマ・確認済み事実・参考URL。生成本文はWordPressに保存します。個人情報や未公開機密は登録しないでください。</p>
+      <?php foreach ($queue as $topic): $draft_id=(int)get_post_meta($topic->ID,'gsai_generated_post',true); ?><tr><td><?php echo esc_html($topic->post_title); ?></td><td><?php echo $draft_id ? '公開済み' : '未生成'; ?></td><td><?php if ($draft_id): ?><a href="<?php echo esc_url(admin_url('post.php?post='.$draft_id.'&action=edit')); ?>">公開済み記事の編集画面へ</a><?php else: ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="gsai_generate"><input type="hidden" name="gsai_topic_id" value="<?php echo esc_attr($topic->ID); ?>"><?php wp_nonce_field('gsai_generate'); ?><button type="submit" class="button">AI記事を生成して公開</button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
+      <p style="margin-top:25px;color:#59636a">AI APIへの送信内容: テーマ・確認済み事実・参考URL。生成本文は審査待ちにせずWordPressに公開されます。個人情報や未公開機密は登録しないでください。毎日自動公開するには上のチェックを有効にし、未処理テーマを登録してください。</p>
     </div>
     <?php
 }

@@ -17,11 +17,13 @@ if [[ $(date +%Z) != JST ]]; then
 fi
 docker compose --profile maintenance config -q
 docker compose --profile maintenance run --rm -T wpcli wp help gsai >/dev/null
+docker compose --profile maintenance run --rm -T wpcli wp help gsai refill >/dev/null
 install -m 0750 scripts/goodspace_daily_run.sh /usr/local/sbin/goodspace-ai-daily
 cat > /etc/cron.d/goodspace-ai-daily <<'CRON'
 # Good Space only; retry during the publication day, in server-local JST.
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+15 0 * * * root /usr/local/sbin/goodspace-ai-daily refill
 5,20,35,50 7 * * * root /usr/local/sbin/goodspace-ai-daily
 5 8-23 * * * root /usr/local/sbin/goodspace-ai-daily
 CRON
@@ -37,5 +39,6 @@ cat > /etc/logrotate.d/goodspace-ai-daily <<'ROTATE'
 }
 ROTATE
 echo 'Good Space daily publishing schedule installed.'
+echo 'Theme refill schedule: 00:15 JST (rolling 14-day queue).'
 echo 'Schedule: 07:05, 07:20, 07:35, 07:50; then 08:05-23:05 (JST).'
 echo 'Posts created today prevent duplicates; no existing Docker application is restarted.'

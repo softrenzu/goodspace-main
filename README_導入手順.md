@@ -59,3 +59,8 @@
 Ubuntu側の定期実行は別途 `sudo bash scripts/install_daily_schedule.sh` で有効化します。JST 07:05/07:20/07:35/07:50および08:05〜23:05毎時に確認し、失敗時に再試行します。実行ログは `/var/log/goodspace/daily-publish.log`。手動確認は `docker compose --profile maintenance run --rm -T wpcli wp gsai status`。この設定はVPSへの導入後にのみ有効になります。
 
 **重要:** サーバー・DB・DNSの停止やネットワーク障害まで含めた「絶対に1日も欠かさない」保証はできません。代替記事も実務向けの定型記事であるため、事後確認と定期的な品質レビューが必要です。自動公開は自社サイトに誤りが出るリスクを伴います。
+## 記事テーマの自動更新（2026年10月13日追加）
+
+今後14日分の記事テーマを毎日0:15（JST）に自動補充します。管理画面の「AI記事テーマ」で予定候補を確認でき、Good Space AI編集画面の「記事テーマを今すぐ補充」でも即時作成できます。期限が過ぎた未使用の自動テーマは下書き状態に退避しますが、管理者が手入力したテーマは保持します。記事テーマは民泊・レンタルスペース運営の一般的な実務領域と改善観点をローテーションして作成するもので、外部の最新ニュースや制度改正を検証したものではありません。
+
+既存VPSでの更新は、変更対象のPHPとスクリプトをバックアップしてからGitHub最新版を取得し、`bash scripts/install_daily_schedule.sh` を再実行してください。日次公開用のCronだけでなく、0:15の日次テーマ補充Cronもインストールされます。手動テストは `docker compose --profile maintenance run --rm -T wpcli wp gsai refill`、状況確認は `docker compose --profile maintenance run --rm -T wpcli wp gsai status` です。

@@ -185,16 +185,8 @@ add_action('admin_post_gsai_generate',function() {
 });
 
 // Only registered/approved topics are used. No automatic publication and no scraping.
-add_action(GSAI_CRON_HOOK,function() {
-    if (!gsai_enabled()) { return; }
-    $topics=get_posts(array('post_type'=>GSAI_POST_TYPE,'post_status'=>'publish','posts_per_page'=>20,'orderby'=>'date','order'=>'ASC'));
-    foreach ($topics as $topic) {
-        if (!get_post_meta($topic->ID,'gsai_generated_post',true)) {
-            gsai_create_draft($topic->ID);
-            break;
-        }
-    }
-});
+require_once __DIR__ . '/goodspace-daily-publisher.php';
+add_action(GSAI_CRON_HOOK, 'gsai_daily_tick');
 
 function gsai_render_admin() {
     if (!current_user_can('manage_options')) { return; }

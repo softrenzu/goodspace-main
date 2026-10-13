@@ -1,6 +1,6 @@
 # Good Space WordPress + MariaDB + AIブログ
 
-**開発版・本番未検証**。企業サイトの新規WordPressテーマ、ブログ、AI下書き作成プラグインと、Ubuntu上でWordPressとMariaDBを構築するスクリプトをまとめたプロジェクトです。
+**開発版・本番未検証**。企業サイトの新規WordPressテーマ、ブログ、AI記事自動公開プラグインと、Ubuntu上でWordPressとMariaDBを構築するスクリプトをまとめたプロジェクトです。
 
 ## Ubuntuで一括セットアップ
 
@@ -40,7 +40,7 @@ docker compose up -d               # 再起動
 
 ## ブログとAI記事
 
-WordPressの「投稿」機能で手動記事を作れます。管理画面「Good Space AI」からOpenRouter APIキー・モデル、記事テーマ、確認済み事実、出典URLを登録し、AI記事を「下書き」保存します。AI下書きの自動生成は初期状態OFFであり、自動公開は行いません。
+WordPressの「投稿」機能で手動記事を作れます。管理画面「Good Space AI」からOpenRouter APIキー・モデル、記事テーマ、確認済み事実、出典URLを登録し、AI記事を品質チェック後にWordPressへ公開します。毎朝07:00ごろの自動生成・公開は初期状態OFFなので、Good Space AI管理画面で有効化し、確認済みテーマを登録してください。記事テーマがなくなると新しい記事は生成されません。
 
 ## 注意事項
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Good Space AI Editor
  * Description: 登録済みの確認済み情報から記事を作成し、品質チェックに通れば公開するGood Space専用AI編集支援。
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires PHP: 8.2
  * Requires at least: 6.5
  * Text Domain: goodspace-ai-editor
@@ -184,14 +184,19 @@ add_action('admin_post_gsai_generate',function() {
     wp_safe_redirect(admin_url('post.php?post='.$id.'&action=edit')); exit;
 });
 
-// Only registered/approved topics are used. No automatic publication and no scraping.
+// Manual topics and automatically prepared editorial topics can be published. No external scraping.
 require_once __DIR__ . '/goodspace-daily-publisher.php';
 add_action(GSAI_CRON_HOOK, 'gsai_daily_tick');
+add_action('admin_post_gsai_refill_topics', function() {
+    gsai_require_authorized('gsai_refill_topics');
+    $result=gsai_daily_refill(14);
+    gsai_admin_redirect(($result['status']??'')==='ok' ? 'topics_refilled' : 'topics_refill_failed');
+});
 
 function gsai_render_admin() {
     if (!current_user_can('manage_options')) { return; }
     $queue=get_posts(array('post_type'=>GSAI_POST_TYPE,'post_status'=>'publish','posts_per_page'=>80,'orderby'=>'date','order'=>'DESC'));
-    $messages=array('settings_saved'=>'設定を保存しました','topic_added'=>'確認済み記事テーマを登録しました','key_error'=>'APIキーが長すぎます','model_error'=>'モデル名が不正です','url_error'=>'URLは有効なHTTPS形式にしてください','topic_error'=>'テーマ、30文字以上の確認済み事実、参考URLを入力してください');
+    $messages=array('settings_saved'=>'設定を保存しました','topic_added'=>'確認済み記事テーマを登録しました','key_error'=>'APIキーが長すぎます','model_error'=>'モデル名が不正です','url_error'=>'URLは有効なHTTPS形式にしてください','topic_error'=>'テーマ、30文字以上の確認済み事実、参考URLを入力してください','topics_refilled'=>'直近14日分の記事テーマを補充しました','topics_refill_failed'=>'記事テーマの補充に失敗しました。サーバーログを確認してください');
     $notice=isset($_GET['gsai_result'])?sanitize_text_field(wp_unslash($_GET['gsai_result'])):'';
     ?>
     <div class="wrap"><h1>Good Space AI Editor</h1>
@@ -204,7 +209,13 @@ function gsai_render_admin() {
         <tr><th>モデルID</th><td><input type="text" name="gsai_model" class="regular-text" value="<?php echo esc_attr(gsai_model()); ?>"></td></tr>
         <tr><th>毎日07:00ごろに記事を自動公開</th><td><label><input type="checkbox" name="gsai_daily" value="1" <?php checked(gsai_enabled()); ?>>有効化する（初期値OFF、登録済み未処理テーマから1件を生成・公開）</label><p class="description">WordPress Cronはサイトアクセスに依存するため、正確な時刻の実行にはOSのcronなどの設定が必要です。時刻はJSTです。</p></td></tr></table>
         <?php submit_button('設定を保存'); ?>
-      </form><hr><h2>2. 確認済みテーマを登録</h2>
+      </form><hr><h2>2. 記事テーマ（毎日自動更新）</h2>
+      <p>今後14日分のテーマを自動的に準備し、毎日0:15（JST）に候補を補充します。テーマを使い切っても自動で補充されます。古くなった未使用の自動テーマは非表示にし、手動で登録したテーマは変更しません。</p>
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" style="margin-bottom:20px">
+        <input type="hidden" name="action" value="gsai_refill_topics"><?php wp_nonce_field('gsai_refill_topics'); ?>
+        <?php submit_button('記事テーマを今すぐ補充','secondary','submit',false); ?>
+      </form>
+      <h3>個別にテーマを追加する（任意）</h3>
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="gsai_add_topic"><?php wp_nonce_field('gsai_topic'); ?>
       <table class="form-table"><tr><th>記事テーマ</th><td><input name="gsai_topic" class="large-text" required placeholder="例：民泊運営を始める前に確認すべき3つの項目"></td></tr>
       <tr><th>確認済み事実</th><td><textarea name="gsai_facts" rows="7" class="large-text" required placeholder="例：このテーマで断定してよい事実を箇条書きで30文字以上記入。法制度、価格、収益の一次資料を確認すること。"></textarea></td></tr>
@@ -212,8 +223,11 @@ function gsai_render_admin() {
       <?php submit_button('テーマを登録'); ?></form><hr>
       <h2>3. 登録済みテーマ・記事生成と公開</h2>
       <?php if (!$queue): ?><p>まだテーマは登録されていません。</p><?php else: ?><table class="widefat striped"><thead><tr><th>テーマ</th><th>状態</th><th>操作</th></tr></thead><tbody>
-      <?php foreach ($queue as $topic): $draft_id=(int)get_post_meta($topic->ID,'gsai_generated_post',true); ?><tr><td><?php echo esc_html($topic->post_title); ?></td><td><?php echo $draft_id ? '公開済み' : '未生成'; ?></td><td><?php if ($draft_id): ?><a href="<?php echo esc_url(admin_url('post.php?post='.$draft_id.'&action=edit')); ?>">公開済み記事の編集画面へ</a><?php else: ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="gsai_generate"><input type="hidden" name="gsai_topic_id" value="<?php echo esc_attr($topic->ID); ?>"><?php wp_nonce_field('gsai_generate'); ?><button type="submit" class="button">AI記事を生成して公開</button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
-      <p style="margin-top:25px;color:#59636a">AI APIへの送信内容: テーマ・確認済み事実・参考URL。生成本文は審査待ちにせずWordPressに公開されます。個人情報や未公開機密は登録しないでください。毎日自動公開するには上のチェックを有効にし、未処理テーマを登録してください。</p>
+      <?php foreach ($queue as $topic): $draft_id=(int)get_post_meta($topic->ID,'gsai_generated_post',true); ?><tr><td><?php echo esc_html($topic->post_title); ?>
+          <?php $auto_day=get_post_meta($topic->ID,'gsai_auto_day',true); if ($auto_day): ?>
+            <br><small>自動追加：<?php echo esc_html($auto_day); ?>向け</small>
+          <?php endif; ?></td><td><?php echo $draft_id ? '公開済み' : '未生成'; ?></td><td><?php if ($draft_id): ?><a href="<?php echo esc_url(admin_url('post.php?post='.$draft_id.'&action=edit')); ?>">公開済み記事の編集画面へ</a><?php else: ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="gsai_generate"><input type="hidden" name="gsai_topic_id" value="<?php echo esc_attr($topic->ID); ?>"><?php wp_nonce_field('gsai_generate'); ?><button type="submit" class="button">AI記事を生成して公開</button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
+      <p style="margin-top:25px;color:#59636a">AI APIへの送信内容: テーマ・確認済み事実・参考URL。生成本文は審査待ちにせずWordPressに公開されます。個人情報や未公開機密は登録しないでください。毎日自動公開するには上のチェックを有効にしてください。未処理テーマは毎日自動補充されます。</p>
     </div>
     <?php
 }

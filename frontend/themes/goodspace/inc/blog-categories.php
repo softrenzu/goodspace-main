@@ -50,7 +50,7 @@ function gs_blog_category_slug_for($text) {
     // Order is deliberate: more-specific groups should win before generic "民泊".
     if (preg_match('/旅館業法|民泊新法|住宅宿泊事業法|特区民泊|許認可|条例|届出|法令|消防法|保健所/u',$text)) { return 'laws'; }
     if (preg_match('/インバウンド|訪日|外国人観光|多言語/u',$text)) { return 'inbound'; }
-    if (preg_match('/Airbnb|Booking\\.com|OTA|予約サイト|掲載|集客|検索順位|広告|集客導線|施設写真|撮影/u',$text)) { return 'booking-marketing'; }
+    if (preg_match('/Airbnb|Booking\.com|OTA|予約サイト|掲載|集客|検索順位|広告|集客導線|施設写真|撮影/u',$text)) { return 'booking-marketing'; }
     if (preg_match('/レンタルスペース|貸会議室|撮影スタジオ|ダンススタジオ|時間貸し/u',$text)) { return 'rental-space'; }
     if (preg_match('/空室|空き家|空き部屋|不動産|物件選定|立地|用途企画|遊休/u',$text)) { return 'real-estate'; }
     if (preg_match('/民泊.*(始め|開始|開業|準備|立ち上げ)|民泊の始め方|民泊開業/u',$text)) { return 'minpaku-start'; }

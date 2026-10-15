@@ -71,6 +71,9 @@ function gsai_daily_auto_topic($day, $plan) {
     update_post_meta($id,'gsai_verified_facts',$plan['facts']);
     update_post_meta($id,'gsai_source_urls',$plan['sources']);
     update_post_meta($id,'gsai_auto_day',$day);
+    if (function_exists('gs_blog_category_slug_for')) {
+        update_post_meta($id,'gsai_category_slug',gs_blog_category_slug_for($plan['title']));
+    }
     return (int)$id;
 }
 
@@ -149,6 +152,9 @@ function gsai_daily_fallback_publish($day, $plan) {
         'post_date'=>current_time('mysql'),
         'meta_input'=>array('gsai_daily_fallback'=>$day,'gsai_daily_needs_review'=>'1'),
     ),true);
+    if (!is_wp_error($id)) {
+        gsai_assign_blog_category((int)$id,$plan['title']);
+    }
     return $id;
 }
 

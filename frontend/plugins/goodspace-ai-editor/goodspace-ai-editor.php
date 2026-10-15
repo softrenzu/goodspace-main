@@ -110,6 +110,11 @@ add_action('admin_post_gsai_add_topic',function() {
     if (is_wp_error($id)) { gsai_admin_redirect('topic_error'); }
     update_post_meta($id,'gsai_verified_facts',$facts);
     update_post_meta($id,'gsai_source_urls',$urls);
+    $category_slug=sanitize_key(wp_unslash($_POST['gsai_category_slug']??''));
+    $valid_slugs=function_exists('gs_blog_category_definitions') ? array_keys(gs_blog_category_definitions()) : array();
+    if ($category_slug && in_array($category_slug,$valid_slugs,true)) {
+        update_post_meta($id,'gsai_category_slug',$category_slug);
+    }
     gsai_admin_redirect('topic_added');
 });
 
@@ -120,7 +125,8 @@ add_action('admin_post_gsai_add_topic',function() {
 function gsai_assign_blog_category($post_id, $title, $topic_id=0) {
     $slug=$topic_id ? (string)get_post_meta($topic_id,'gsai_category_slug',true) : '';
     if (!$slug && function_exists('gs_blog_category_slug_for')) {
-        $slug=gs_blog_category_slug_for($title);
+        $topic_title=$topic_id ? get_the_title($topic_id) : '';
+        $slug=gs_blog_category_slug_for($topic_title ?: $title);
     }
     if (!$slug) { $slug='operations'; }
     $term=get_category_by_slug($slug);
@@ -234,6 +240,11 @@ function gsai_render_admin() {
       <h3>個別にテーマを追加する（任意）</h3>
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post"><input type="hidden" name="action" value="gsai_add_topic"><?php wp_nonce_field('gsai_topic'); ?>
       <table class="form-table"><tr><th>記事テーマ</th><td><input name="gsai_topic" class="large-text" required placeholder="例：民泊運営を始める前に確認すべき3つの項目"></td></tr>
+      <tr><th>ブログカテゴリー</th><td>
+      <select name="gsai_category_slug"><option value="">自動判定する</option>
+      <?php if (function_exists('gs_blog_category_definitions')): foreach(gs_blog_category_definitions() as $slug=>$item): ?>
+      <option value="<?php echo esc_attr($slug); ?>"><?php echo esc_html($item['name']); ?></option>
+      <?php endforeach; endif; ?></select><p class="description">記事を公開するときのカテゴリーです。未指定なら記事テーマから推定します。</p></td></tr>
       <tr><th>確認済み事実</th><td><textarea name="gsai_facts" rows="7" class="large-text" required placeholder="例：このテーマで断定してよい事実を箇条書きで30文字以上記入。法制度、価格、収益の一次資料を確認すること。"></textarea></td></tr>
       <tr><th>参考URL</th><td><textarea name="gsai_sources" rows="4" class="large-text" required placeholder="https://...\nhttps://..."></textarea><p class="description">1行にHTTPSのURLを1つ。URL先の情報をAIが取得するわけではありません。事実の転記は別欄に必要です。</p></td></tr></table>
       <?php submit_button('テーマを登録'); ?></form><hr>

@@ -1,3 +1,10 @@
+## 設計書・設定書（2026-10-15更新）
+
+- [システム設計書](docs/システム設計書.md)：アーキテクチャ、画面・カテゴリー設計、AI記事生成、日次公開、データ構造、テスト項目、既知課題
+- [環境設定書](docs/環境設定書.md)：Xserver VPS、DNS、Nginx/HTTPS、Docker、WordPress、OpenRouter、Cron、バックアップ、障害対応手順
+
+両文書は**GitHub上のソースと2026-10-13までの利用者提供ログを突合した構成資料**です。VPSへ未反映のGitHub変更は「反映済み」とみなしません。実パスワードやAPIキーは含みません。
+
 # Good Space WordPress + MariaDB + AIブログ
 
 **開発版・本番未検証**。企業サイトの新規WordPressテーマ、ブログ、AI記事自動公開プラグインと、Ubuntu上でWordPressとMariaDBを構築するスクリプトをまとめたプロジェクトです。

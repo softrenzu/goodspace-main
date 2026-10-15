@@ -63,3 +63,30 @@ WordPressの「投稿」機能で手動記事を作れます。管理画面「Go
 Ubuntu側の定期実行は別途 `sudo bash scripts/install_daily_schedule.sh` で有効化します。JST 07:05/07:20/07:35/07:50および08:05〜23:05毎時に確認し、失敗時に再試行します。実行ログは `/var/log/goodspace/daily-publish.log`。手動確認は `docker compose --profile maintenance run --rm -T wpcli wp gsai status`。この設定はVPSへの導入後にのみ有効になります。
 
 **重要:** サーバー・DB・DNSの停止やネットワーク障害まで含めた「絶対に1日も欠かさない」保証はできません。代替記事も実務向けの定型記事であるため、事後確認と定期的な品質レビューが必要です。自動公開は自社サイトに誤りが出るリスクを伴います。
+
+## カテゴリー別ブログ（2026-10更新）
+
+参考サイトのように、ブログを**カテゴリー別に閲覧・検索**できる画面を追加しました。
+
+カテゴリー：
+- 民泊の始め方
+- 運営ノウハウ
+- レンタルスペース
+- 不動産・空室活用
+- 集客・予約サイト
+- 法令・許認可
+- インバウンド
+- Good Spaceのお知らせ
+
+`/blog/` にカテゴリーカードとキーワード検索を表示し、各カテゴリーの専用一覧、スマートフォンのハンバーガーメニュー内リンク、記事末尾のカテゴリー移動リンクを追加しています。8カテゴリーはテーマ読み込み時に一度だけ自動作成されます。既存のページやURLは変えません。
+
+AI記事はテーマのカテゴリー指定、または記事テーマからの自動判定で分類され、毎日の代替記事も分類されます。新しいAIテーマ登録画面でカテゴリーを手動指定することもできます。法律や許認可に関する最新情報は自動生成時に推測しないでください。
+
+既存の未分類記事を整理したい場合のみ、まずバックアップ後にWordPress CLIから次を一度実行します（すでに独自カテゴリーが付いている記事は変更しません）：
+
+```bash
+docker compose --profile maintenance run --rm -T -v "$PWD/scripts:/tmp/goodspace-scripts:ro" \
+  wpcli wp eval-file /tmp/goodspace-scripts/assign_blog_categories.php
+```
+
+**既存VPS更新時:** `docker-compose.yml`、`.env`、Nginx、DB、既存記事データは書き換えず、テーマ・プラグイン・追加スクリプトのみGitHubから反映してください。公開の確認は `https://preview.good-space.jp/blog/` で行います。

@@ -64,3 +64,13 @@ Ubuntu側の定期実行は別途 `sudo bash scripts/install_daily_schedule.sh` 
 今後14日分の記事テーマを毎日0:15（JST）に自動補充します。管理画面の「AI記事テーマ」で予定候補を確認でき、Good Space AI編集画面の「記事テーマを今すぐ補充」でも即時作成できます。期限が過ぎた未使用の自動テーマは下書き状態に退避しますが、管理者が手入力したテーマは保持します。記事テーマは民泊・レンタルスペース運営の一般的な実務領域と改善観点をローテーションして作成するもので、外部の最新ニュースや制度改正を検証したものではありません。
 
 既存VPSでの更新は、変更対象のPHPとスクリプトをバックアップしてからGitHub最新版を取得し、`bash scripts/install_daily_schedule.sh` を再実行してください。日次公開用のCronだけでなく、0:15の日次テーマ補充Cronもインストールされます。手動テストは `docker compose --profile maintenance run --rm -T wpcli wp gsai refill`、状況確認は `docker compose --profile maintenance run --rm -T wpcli wp gsai status` です。
+
+## カテゴリー別ブログの反映（2026年10月15日）
+
+WordPressテーマが有効なら、新しいブログ一覧 `/blog/` に8つのカテゴリーと検索が表示されます。各カテゴリーの一覧ページとスマートフォンの展開メニューから記事へ直接移動できます。
+
+既存サーバーのテーマPHP/CSSとAIプラグインPHPだけをGitHubから更新し、既存の `.env`・`docker-compose.yml`・Nginx設定・データベースは変更しないでください。テーマのカテゴリーは初回アクセス時に作成されます。
+
+未分類の記事だけをカテゴリー分けする場合は、記事・DBバックアップを取得し、`docker compose --profile maintenance run --rm -T -v "$PWD/scripts:/tmp/goodspace-scripts:ro" wpcli wp eval-file /tmp/goodspace-scripts/assign_blog_categories.php` を一度実行します。管理者が設定した既存カテゴリーは保持します。
+
+新しいAI記事は登録されたテーマのカテゴリーかタイトルから推定して分類されます。定期投稿・代替投稿にもカテゴリーを割り当てます。

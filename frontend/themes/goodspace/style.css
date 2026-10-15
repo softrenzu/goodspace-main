@@ -3,7 +3,7 @@ Theme Name: Good Space Renew
 Theme URI: https://good-space.jp/
 Author: Good Space site project
 Description: Good Space向け企業サイト・ブログ用のオリジナルテーマ（開発版）
-Version: 1.0.0
+Version: 1.1.0
 Requires at least: 6.5
 Requires PHP: 8.2
 Text Domain: goodspace-renew
@@ -16,3 +16,64 @@ Text Domain: goodspace-renew
 @media (max-width:760px){.container{width:calc(100% - 40px)}.section{padding-block:78px}.header-inner{min-height:70px}.brand-type strong{font-size:21px}.brand-type small{font-size:7px}.nav-toggle{display:block}.site-nav{display:none;position:absolute;top:70px;left:0;right:0;background:white;box-shadow:0 15px 18px #173a2a22;padding:25px 20px 35px}.site-nav.is-open{display:block}.nav-list{display:flex;flex-direction:column;align-items:stretch;gap:0}.nav-list li a{display:block;padding:13px 4px;font-size:14px;border-bottom:1px solid #e6ece6}.header-contact{margin-top:20px;justify-content:space-between}.hero-layout{grid-template-columns:1fr;min-height:0}.hero-copy{padding:72px 0 36px}.hero h1{font-size:clamp(44px,10.7vw,64px);white-space:normal}.hero-lead{font-size:13px}.hero-actions{margin:30px 0;gap:10px}.button{min-height:54px;padding:14px 18px;font-size:12px;gap:22px}.hero-visual{min-height:390px;max-height:510px;margin-inline:-20px}.hero-visual>img{height:460px}.hero-visual-label{left:20px;bottom:30px;padding:15px 18px}.hero-tail{height:65px}.hero-tail>span{font-size:10px}.intro-layout,.approach-layout,.company-layout,.contact-layout{grid-template-columns:1fr;gap:32px}.intro-text{padding-top:0}.display-heading{font-size:clamp(36px,8vw,52px)}.intro-text p{font-size:15px}.section-heading{align-items:flex-start;flex-direction:column;gap:16px;margin-bottom:36px}.service-tiles{grid-template-columns:1fr;gap:18px}.tile-art{height:280px}.tile-content{padding:27px 26px 34px}.tile-content h3{font-size:25px}.service-promo{padding:24px;gap:12px}.service-promo strong{font-size:16px}.service-promo p{font-size:11px}.promo-arrow{width:45px;height:45px}.approach-visual{min-height:360px}.approach-mark{font-size:118px}.approach-content{margin-top:20px}.journal-grid{grid-template-columns:1fr;gap:40px}.journal-image{aspect-ratio:1.65}.journal-card p{min-height:auto}.site-footer{padding-top:72px}.footer-head{align-items:flex-start;flex-direction:column;padding-bottom:58px}.footer-head h2{font-size:37px}.footer-grid{grid-template-columns:1fr 1fr;gap:28px;padding:48px 0}.footer-grid .footer-about{grid-column:1/-1}.footer-grid nav:last-child{grid-column:auto}.footer-bottom{gap:14px;flex-wrap:wrap}.inner-main .page-hero{padding:75px 0}.page-hero h1{font-size:46px}.service-hero-grid{grid-template-columns:1fr}.page-hero-service{padding-block:65px!important}.service-hero-img{height:270px}.feature-grid{grid-template-columns:1fr 1fr;gap:12px}.feature-grid>div{padding:24px 18px}.feature-grid h3{font-size:18px}.split-cta{align-items:flex-start;flex-direction:column}.company-table dl>div{grid-template-columns:105px 1fr}.contact-method{grid-template-columns:62px 1fr 24px;gap:8px}.article-header{padding:50px 0}.article-header h1{font-size:33px}.article-body{padding:42px 0 70px}.article-end{flex-direction:column}}
 @media (max-width:380px){.hero h1{font-size:43px}.overline{font-size:8px}.feature-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr}.footer-grid .footer-about{grid-column:auto}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
+
+/* Good Space Journal / category-first information architecture */
+.blog-hero{padding-block:82px 88px!important;background:linear-gradient(125deg,#eef4ee 0%,#f7f9f4 100%)!important}
+.blog-hero h1{font-size:clamp(36px,4.2vw,62px);max-width:850px;line-height:1.45}
+.blog-hero p{max-width:720px}
+.blog-breadcrumb{font-size:12px;color:#507164;margin:0 0 24px}
+.blog-breadcrumb a{text-decoration:underline;text-underline-offset:4px}
+.blog-index-section{padding-block:70px 110px}
+.blog-directory{margin-bottom:76px}
+.blog-directory-head{display:flex;align-items:flex-end;justify-content:space-between;gap:36px;margin-bottom:27px}
+.blog-directory-head h2{font-size:clamp(26px,2.7vw,38px);letter-spacing:-.045em;font-weight:600;line-height:1.4;margin:11px 0 8px}
+.blog-directory-head p{font-size:13px;color:#63756b;margin:0}
+.blog-search-form,.mobile-blog-search{display:flex;align-items:stretch;min-height:49px;width:min(100%,380px);flex-shrink:0}
+.blog-search-form input,.mobile-blog-search input{flex:1;min-width:0;padding:12px 14px;background:white;border:1px solid #bdcec3;border-right:0;border-radius:3px 0 0 3px;color:var(--ink);font:inherit;font-size:12px}
+.blog-search-form button,.mobile-blog-search button{background:var(--forest);border:1px solid var(--forest);border-radius:0 3px 3px 0;padding:12px 16px;color:#fff;white-space:nowrap;font-weight:700;font-size:12px;cursor:pointer}
+.blog-search-form button:hover,.mobile-blog-search button:hover{background:#153b33}
+.blog-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.blog-category-card{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:164px;padding:21px 22px;background:#f3f7f2;border:1px solid #e0e8df;border-radius:4px;transition:background .2s,border-color .2s,transform .2s}
+.blog-category-card strong{font-size:17px;line-height:1.55;font-weight:750;letter-spacing:-.03em}
+.blog-category-description{font-size:11px;color:#617368;line-height:1.7;flex:1}
+.blog-category-foot{display:flex;align-items:center;justify-content:space-between;color:#47745d;font-size:11px;font-weight:700;margin-top:5px}
+.blog-category-foot span:last-child{font-size:17px}
+.blog-category-card:hover{background:#e5eee5;border-color:#99ba9c;transform:translateY(-2px)}
+.blog-category-card[aria-current="page"]{background:#e0eee3;border-color:#5b9571}
+.blog-results-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:32px}
+.blog-results-heading h2{font-size:clamp(26px,3vw,40px);font-weight:600;letter-spacing:-.045em;line-height:1.35;margin:7px 0 0}
+.blog-results-count{color:#62776b;font-size:12px;font-weight:700;white-space:nowrap}
+.mobile-blog-directory{display:none}
+@media(max-width:1050px){
+  .blog-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .blog-hero{padding:50px 0 54px!important}
+  .blog-hero h1{font-size:clamp(30px,7.6vw,42px);letter-spacing:-.05em;margin:16px 0}
+  .blog-hero p{font-size:13px;line-height:1.9}
+  .blog-index-section{padding-block:45px 76px}
+  .blog-directory{margin-bottom:58px}
+  .blog-directory-head{flex-direction:column;align-items:stretch;gap:21px;margin-bottom:20px}
+  .blog-directory-head h2{font-size:26px}
+  .blog-search-form{width:100%}
+  .blog-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .blog-category-card{min-height:146px;padding:16px 13px}
+  .blog-category-card strong{font-size:14px}
+  .blog-category-description{font-size:10px}
+  .blog-results-heading{margin-bottom:25px}
+  .blog-results-heading h2{font-size:27px}
+  .blog-results-count{font-size:11px}
+  .site-nav.is-open{max-height:calc(100dvh - 70px);overflow-y:auto;overscroll-behavior:contain}
+  .mobile-blog-directory{display:block;margin-top:25px;padding-top:20px;border-top:2px solid #e6ece6}
+  .mobile-menu-section-label{font-size:12px;letter-spacing:.12em;color:#53765e;font-weight:800;margin:0 0 14px}
+  .mobile-blog-search{width:100%;margin-bottom:15px}
+  .mobile-blog-categories{display:flex;flex-direction:column}
+  .mobile-blog-categories a{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 3px;border-bottom:1px solid #e2eae3;font-size:14px;font-weight:650}
+  .mobile-blog-categories a span{color:#648978}
+  .mobile-blog-categories a[aria-current="page"]{color:#14734a}
+}
+@media(max-width:390px){
+  .blog-category-grid{grid-template-columns:1fr}
+  .blog-category-card{min-height:112px}
+}

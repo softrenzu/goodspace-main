@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Good Space AI Editor
  * Description: 登録済みの確認済み情報から記事を作成し、品質チェックに通れば公開するGood Space専用AI編集支援。
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires PHP: 8.2
  * Requires at least: 6.5
  * Text Domain: goodspace-ai-editor
@@ -113,6 +113,21 @@ add_action('admin_post_gsai_add_topic',function() {
     gsai_admin_redirect('topic_added');
 });
 
+/**
+ * Assign a WordPress blog category to AI posts without changing their permalink.
+ * The theme supplies the shared editorial mapping; fall back to operations.
+ */
+function gsai_assign_blog_category($post_id, $title, $topic_id=0) {
+    $slug=$topic_id ? (string)get_post_meta($topic_id,'gsai_category_slug',true) : '';
+    if (!$slug && function_exists('gs_blog_category_slug_for')) {
+        $slug=gs_blog_category_slug_for($title);
+    }
+    if (!$slug) { $slug='operations'; }
+    $term=get_category_by_slug($slug);
+    if (!$term) { $term=get_category_by_slug('operations'); }
+    if ($term) { wp_set_post_categories((int)$post_id,array((int)$term->term_id),false); }
+}
+
 function gsai_create_draft($topic_id) {
     $topic=get_post($topic_id);
     if (!$topic || $topic->post_type!==GSAI_POST_TYPE || $topic->post_status!=='publish') {
@@ -172,6 +187,7 @@ function gsai_create_draft($topic_id) {
         'meta_input'=>array('gsai_source_topic'=>$topic_id,'gsai_needs_fact_check'=>'1'),
     ),true);
     if (is_wp_error($id)) { return new WP_Error('save_error','WordPressに記事を公開できませんでした'); }
+    gsai_assign_blog_category((int)$id,$title,$topic_id);
     update_post_meta($topic_id,'gsai_generated_post',(int)$id);
     return (int)$id;
 }

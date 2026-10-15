@@ -1,6 +1,7 @@
 <?php
 /** Good Space corporate theme: presentation only. AI functionality is in the plugin. */
 if (!defined('ABSPATH')) { exit; }
+require_once __DIR__ . '/inc/blog-categories.php';
 
 function gs_theme_setup() {
     add_theme_support('title-tag');
